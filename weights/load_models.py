@@ -15,10 +15,10 @@ class loadModels:
         return predictedUNET
 
     def loadYOLO(self, weight):
-        predictedYOLOv5m = torch.hub.load('ultralytics/yolov5', 'custom', path=weight)
-        predictedYOLOv5m.to(self.device)
-        predictedYOLOv5m.eval()
-        return predictedYOLOv5m
+        predictedYOLO = torch.hub.load('ultralytics/yolov5', 'custom', path=weight)
+        predictedYOLO.to(self.device)
+        predictedYOLO.eval()
+        return predictedYOLO
 
     def loadCNN(self, weight):
         modelCNN = Network()
