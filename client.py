@@ -9,7 +9,6 @@ from utils.controller import *
 from utils.traffic_signs_detection import *
 from utils.image_processing import *
 import argparse
-
 # Create a socket object
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -28,7 +27,6 @@ if str(ROOT) not in sys.path:
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 WORK_DIR = os.path.dirname(ROOT)
 sys.path.insert(0, WORK_DIR)
-global angle, speed
 
 
 def set_angle_speed(sendBackAngle, sendBackSpeed):
@@ -40,10 +38,11 @@ def set_angle_speed(sendBackAngle, sendBackSpeed):
 
 def parse_arg():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weight-seg', type=str, help='initial weights path', default='weights/segmentation/unet_v2')
-    parser.add_argument('--weight-det', type=str, help='initial weights path', default='weights/detection/best_m.pt')
+    parser.add_argument('--weight-seg', type=str, help='initial weights path',
+                        default='./weights/segmentation/unet_v2.pth')
+    parser.add_argument('--weight-det', type=str, help='initial weights path', default='./weights/detection/best_m.pt')
     parser.add_argument('--weight-rec', type=str, help='initial weights path',
-                        default='weights/recognition/weight6_sum.pth')
+                        default='./weights/recognition/weight6_sum.pth')
     return parser.parse_args()
 
 
