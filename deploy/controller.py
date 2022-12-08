@@ -279,7 +279,7 @@ class Controller:
             return -2
         return self.current_speed
 
-    def __findingLane(self, scale=60):
+    def __findingLane(self, scale=20):
         arr_normal = []
         height = self.mask.shape[0] - scale
         lineRow = self.mask[height, :]
@@ -295,7 +295,7 @@ class Controller:
         return error
 
     @staticmethod
-    def __PID(error, p=0.40, i=0, d=0.05):
+    def __PID(error, p=0.43, i=0, d=0.05):
         global t
         global error_arr
         error_arr[1:] = error_arr[0:-1]
@@ -316,9 +316,9 @@ class Controller:
         list_angle[1:] = list_angle[0:-1]
         list_angle[0] = abs(error)
         list_angle_train = np.array(list_angle).reshape((-1, 1))
-        predSpeed = np.dot(list_angle, - 0.1) + 100
+        predSpeed = np.dot(list_angle, - 0.2) + 110
         # reg = LinearRegression().fit(list_angle_train, speed)
-        reg = RandomForestRegressor(n_estimators=30, random_state=1).fit(list_angle_train, predSpeed)
+        reg = RandomForestRegressor(n_estimators=30, random_state=0).fit(list_angle_train, predSpeed)
         predSpeed = reg.predict(np.array(list_angle_train))
         return predSpeed[0]
 

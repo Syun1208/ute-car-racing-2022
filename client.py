@@ -8,10 +8,12 @@ from weights.load_models import loadModels
 from deploy.controller import *
 import logging
 import yaml
+import torch
 from deploy.traffic_signs_detection import *
 from deploy.image_processing import *
 import argparse
 
+torch.cuda.set_device(0)
 # Create a socket object
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -177,8 +179,8 @@ def main():
             key = cv2.waitKey(1)
             # Controller
             controller = Controller(mask, float(current_speed))
-            sendBackAngle, sendBackSpeed = controller()
-            set_angle_speed(sendBackAngle, sendBackSpeed)
+            angle, speed = controller()
+            set_angle_speed(angle, speed)
             end = time.time()
             fps = 1 / (end - start)
     finally:
