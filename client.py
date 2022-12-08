@@ -57,23 +57,28 @@ def set_angle_speed(sendBackAngle, sendBackSpeed):
 def parse_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument('--weight-seg', type=str, help='initial weights path',
-                        default='./weights/segmentation/unet_v2.pth')
-    parser.add_argument('--weight-det', type=str, help='initial weights path', default='./weights/detection/best_m.pt')
+                        default=data_yaml['segmentation']['weight_path'])
+    parser.add_argument('--weight-det', type=str, help='initial weights path',
+                        default=data_yaml['detection']['weight_path'])
     parser.add_argument('--weight-rec', type=str, help='initial weights path',
-                        default='./weights/recognition/weight6_sum.pth')
+                        default=data_yaml['recognition']['weight_path'])
     return parser.parse_args()
 
 
 def load_weights():
     args = parse_arg()
+    # logging.basicConfig(filename="std.log", format='%(asctime)s %(message)s', filemode='w')
+    # logger = logging.getLogger()
+    # logger.setLevel(logging.DEBUG)
+    # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
     trainedModel = loadModels()
     trainedSegmentation = trainedModel.loadUNET(args.weight_seg)
-    logging.info('DONE IN LOADING SEGMENTATION')
+    print('[INFO]: DONE IN LOADING SEGMENTATION')
     trainedDetection = trainedModel.loadYOLO(args.weight_det)
-    logging.info('DONE IN LOADING DETECTION')
+    print('[INFO]: DONE IN LOADING DETECTION')
     trainedRecognition = trainedModel.loadCNN(args.weight_rec)
-    logging.info('DONE IN LOADING RECOGNITION')
-    logging.info('CHIẾN THÔI !')
+    print('[INFO]: DONE IN LOADING RECOGNITION')
+    print('[INFO]: CHIẾN THÔI !')
     return trainedSegmentation, trainedDetection, trainedRecognition
 
 

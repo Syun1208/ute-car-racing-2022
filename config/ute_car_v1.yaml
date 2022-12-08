@@ -1,7 +1,7 @@
 PID:
   d: 0.05
   i: 0
-  p: 0.4
+  p: 0.43
   scale_finding_lane: 5
 angle:
   scale: 28
@@ -19,17 +19,17 @@ detection:
   shape: !!python/tuple
   - 320
   - 320
-  weight_path: path/to/weight
+  weight_path: './weights/detection/best_m.pt'
 recognition:
   shape: !!python/tuple
   - 64
   - 64
-  weight_path: path/to/weight
+  weight_path: './weights/recognition/weight6_sum.pth'
 segmentation:
   shape: !!python/tuple
   - 160
   - 80
-  weight_path: path/to/weight
+  weight_path: './weights/segmentation/unet_v2.pth'
 speed:
   max: 100
   min: 20
