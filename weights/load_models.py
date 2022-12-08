@@ -1,6 +1,8 @@
 import torch
-from models.UNET import build_unet
-from models.CNN import Network
+from model.UNET import build_unet
+from model.CNN import Network
+import sys
+
 
 
 class loadModels:

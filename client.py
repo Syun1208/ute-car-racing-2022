@@ -5,10 +5,13 @@ import json
 import base64
 from pathlib import Path
 from weights.load_models import loadModels
-from utils.controller import *
-from utils.traffic_signs_detection import *
-from utils.image_processing import *
+from deploy.controller import *
+import logging
+import yaml
+from deploy.traffic_signs_detection import *
+from deploy.image_processing import *
 import argparse
+
 # Create a socket object
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -19,7 +22,7 @@ port = 54321
 s.connect(('127.0.0.1', port))
 angle = 10
 speed = 100
-
+error = 0
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 if str(ROOT) not in sys.path:
@@ -50,8 +53,12 @@ def load_weights():
     args = parse_arg()
     trainedModel = loadModels()
     trainedSegmentation = trainedModel.loadUNET(args.weight_seg)
+    logging.info('DONE IN LOADING SEGMENTATION')
     trainedDetection = trainedModel.loadYOLO(args.weight_det)
+    logging.info('DONE IN LOADING DETECTION')
     trainedRecognition = trainedModel.loadCNN(args.weight_rec)
+    logging.info('DONE IN LOADING RECOGNITION')
+    logging.info('CHIẾN THÔI !')
     return trainedSegmentation, trainedDetection, trainedRecognition
 
 
@@ -70,6 +77,8 @@ def main():
     flag_timer = 0
     global angle, speed
     trainedSegmentation, trainedDetection, trainedRecognition = load_weights()
+    file = open('./config/ute_car_v1.yaml', 'r')
+    data_yaml = yaml.full_load(file)
     try:
         while True:
             # Gửi góc lái và tốc độ để điều khiển xe
@@ -92,8 +101,8 @@ def main():
             jpg_original = base64.b64decode(data_recv["Img"])
             jpg_as_np = np.frombuffer(jpg_original, dtype=np.uint8)
             image = cv2.imdecode(jpg_as_np, flags=1)
-            cv2.imshow("IMG", image)
-            key = cv2.waitKey(1)
+            # cv2.imshow("IMG", image)
+            # key = cv2.waitKey(1)
             print("Img Shape: ", image.shape)
             '''----------------------------IMAGE PROCESSING--------------------------'''
             # Save image
@@ -115,7 +124,7 @@ def main():
                 # Real-time processing
                 frame += 1
                 if frame % 1 == 0:
-                    # Detection
+                    # Detection and Recognition
                     modelDetection = detection(image)
                     out_sign = modelDetection(trainedDetection, trainedRecognition)
                 if carFlag == 0:
@@ -155,9 +164,9 @@ def main():
                 Signal_Traffic = out_sign
             '''---------------------------CONTROLLER---------------------------'''
             # Code anh Tuong
-            Signal_Traffic, speed, error, flag_timer = Control_Car(enhancedMask, out_sign, Signal_Traffic,
+            Signal_Traffic, speed, error, flag_timer = Control_Car(mask, out_sign, Signal_Traffic,
                                                                    current_speed)
-            angle = -PID(error, 0.40, 0, 0.05)
+            angle = -PID(error, data_yaml['PID']['p'], data_yaml['PID']['i'], data_yaml['PID']['d'])
             angle, speed = set_angle_speed(angle, speed)
             end = time.time()
             fps = 1 / (end - start)

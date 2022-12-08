@@ -167,7 +167,7 @@ class imageProcessing:
 
 class segmentation:
     def __init__(self, image):
-        self.image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)[125:, :]
+        self.image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     def __call__(self, model, *args, **kwargs):

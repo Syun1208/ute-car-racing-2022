@@ -1,8 +1,7 @@
 # ------------Include Library----------#
 import numpy as np
 import time
-import cv2
-from utils.image_processing import imageProcessing
+from deploy.image_processing import imageProcessing
 
 # -------------time-------------#
 pre_time = time.time()
