@@ -2,9 +2,9 @@ PID:
   d: 0.05
   i: 0
   p: 0.43
-  scale_finding_lane: 5
+  scale_finding_lane: 30
 angle:
-  scale: 28
+  scale: 1
 classes:
 - straight
 - turn_left
@@ -31,5 +31,5 @@ segmentation:
   - 80
   weight_path: './weights/segmentation/unet_v2.pth'
 speed:
-  max: 100
+  max: 110
   min: 20

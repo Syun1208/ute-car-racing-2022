@@ -3,7 +3,18 @@ import numpy as np
 import time
 from deploy.image_processing import imageProcessing
 from sklearn.ensemble import RandomForestRegressor
+from pathlib import Path
+import sys
+import yaml
+import os
 
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[0]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))  # add ROOT to PATH
+ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+WORK_DIR = os.path.dirname(ROOT)
+sys.path.insert(0, WORK_DIR)
 # # -------------time-------------#
 # pre_time = time.time()
 # tim_str = time.time()
@@ -268,6 +279,9 @@ list_angle = np.zeros(5)
 error_arr = np.zeros(5)
 t = time.time()
 
+file_yaml = open(os.path.join(WORK_DIR, 'config/ute_car_v1.yaml'), 'r')
+data_yaml = yaml.full_load(file_yaml)
+
 
 class Controller:
     def __init__(self, mask, current_speed):
@@ -277,9 +291,9 @@ class Controller:
     def __reduceSpeed(self, speed):
         if self.current_speed > 100:
             return -2
-        return self.current_speed
+        return speed
 
-    def __findingLane(self, scale=30):
+    def __findingLane(self, scale=data_yaml['PID']['scale_finding_lane']):
         arr_normal = []
         height = self.mask.shape[0] - scale
         lineRow = self.mask[height, :]
@@ -295,7 +309,7 @@ class Controller:
         return error
 
     @staticmethod
-    def __PID(error, p=0.43, i=0, d=0.05):
+    def __PID(error, p=data_yaml['PID']['p'], i=data_yaml['PID']['i'], d=data_yaml['PID']['d']):
         global t
         global error_arr
         error_arr[1:] = error_arr[0:-1]
@@ -309,14 +323,14 @@ class Controller:
         # angle = self.__optimizeFuzzy(angle)
         if abs(angle) > 25:
             angle = np.sign(angle) * 25
-        return - int(angle)
+        return - int(angle) * data_yaml['angle']['scale']
 
     @staticmethod
     def __conditionalSpeed(error):
         list_angle[1:] = list_angle[0:-1]
         list_angle[0] = abs(error)
         list_angle_train = np.array(list_angle).reshape((-1, 1))
-        predSpeed = np.dot(list_angle, - 0.2) + 120
+        predSpeed = np.dot(list_angle, - 0.2) + data_yaml['speed']['max']
         # reg = LinearRegression().fit(list_angle_train, speed)
         reg = RandomForestRegressor(n_estimators=40, random_state=1).fit(list_angle_train, predSpeed)
         predSpeed = reg.predict(np.array(list_angle_train))
