@@ -16,8 +16,9 @@ import sys
 import time
 import cv2
 import pycuda.autoinit  
-from utils.yolo_classes import get_cls_dict
-
+from utils.yolo_classes import get_cls_dict, COCO_CLASSES_LIST
+from deploy.controller import *
+from deploy.image_processing import *
 from utils.display import open_window, set_display, show_fps
 from utils.visualization import BBoxVisualization
 from utils.yolo_with_plugins import TrtYOLO
@@ -62,6 +63,24 @@ def gstreamer_pipeline(
         )
     )
 
+
+def set_angle_speed(Car, steering, speed):
+    if (abs(steering)>50):          #nếu dự đoán góc trên 50 thì cho bẻ góc tối đa
+        if(steering>50):
+            steering=50
+        elif(steering<-50):
+            steering=-50  
+        speed = 5             
+        Car.setAngle(-steering*0.8)
+    elif(abs(steering)<20):
+        Car.setAngle(-steering*0.7)
+    else:                           
+        Car.setAngle(-steering*0.8)
+    Car.setSpeed_rad(speed)
+    if Car.button == 1:
+        Car.setSpeed_rad(0)
+
+
 def parse_args():
     """Parse input arguments."""
     desc = ('Capture and display live camera video, while doing '
@@ -84,11 +103,8 @@ def parse_args():
 
 def loop_and_detect(cam, trt_yolo, conf_th, vis):
     Car = UITCar.UITCar()
-
-
-    
     session_lane = onnxruntime.InferenceSession(
-        'lane_gpu.onnx', None, providers=['CPUExecutionProvider'])
+        'lane_mod.onnx', None, providers=['CPUExecutionProvider'])
     input_name_lane = session_lane.get_inputs()[0].name
     session_sign = onnxruntime.InferenceSession(
         'sign_new.onnx', None, providers=['CUDAExecutionProvider'])
@@ -107,7 +123,7 @@ def loop_and_detect(cam, trt_yolo, conf_th, vis):
         try:        
             copyImage = np.copy(img)            
 
-            DAsegmentation, steering, center = road_lines(copyImage, session=session_lane,inputname=input_name_lane)    #hàm detect làn đường trả về ảnh đã detect, góc lái, với điểm center dự đoán      
+            image_segmentation = road_lines(copyImage, session=session_lane,inputname=input_name_lane)    #hàm detect làn đường trả về ảnh đã detect, góc lái, với điểm center dự đoán      
 
             boxes, confs, clss = trt_yolo.detect(img, conf_th)              #trả về boxes: chứa tọa độ bounding box, phần trăm dự đoán, và phân lớp
             if(len(confs)>0):                                               #nếu nhận diện được biển báo
@@ -117,37 +133,31 @@ def loop_and_detect(cam, trt_yolo, conf_th, vis):
                 classDetect=int(clss[index])
                 clss=[clss[index]]
             # hàm vẽ bounding box lên ảnh, trả về ảnh đã vẽ, center của các đối tượng, phân lớp, và diện tích của boundingbox
-            img, centers, class_TS, area = vis.draw_bboxes(
+            #Classify
+            centers, class_TS, area = vis.draw_bboxes(
                 img, boxes, confs, clss, session=session_sign, inputname=input_name_sign)
-
             if (len(centers) > 0):                                                      #nếu phát hiện đối tượng                                                                
                 #phải sau 2s so với lần xử lý biển báo trước thì mới cho xử lý biển báo tiếp theo 
                 if time.time()-start_time_detect>2 and area >2400:    
-                    if class_TS == 're trai':
-                        print('re trai')
+                    if class_TS == COCO_CLASSES_LIST.index('trai'):
+                        print('trai')
             
-                    elif class_TS == 'di thang':
-                        print('di thang')
+                    elif class_TS == COCO_CLASSES_LIST.index('thang'):
+                        print('thang')
                     start_time_detect = time.time()
             #####------Điều khiển-----------------------
             img = show_fps(img, fps)
-            speed=60
-            if (abs(steering)>50):          #nếu dự đoán góc trên 50 thì cho bẻ góc tối đa
-                if(steering>50):
-                    steering=50
-                elif(steering<-50):
-                    steering=-50               
-                Car.setAngle(-steering*0.8)
-
-            elif(abs(steering)<20):
-                Car.setAngle(-steering*0.7)
-            else:                           
-                Car.setAngle(-steering*0.8)
-
-            Car.setSpeed_cm(speed)
+            maxSpeed=20
+            Car.setSpeed_rad(maxSpeed)
+            controller = Controller(image_segmentation, maxSpeed, class_TS, Car)
+            angle, speed = controller()
+            # Set into module
+            set_angle_speed(Car, angle, speed)
+            Car.OLED_Print('Speed: {}'.format(str(speed)), 4)
+            Car.OLED_Print('Angle: {}'.format(str(angle)), 5)
             #####------Điều khiển-----------------------
             if SHOW_IMG:
-                img[:DAsegmentation.shape[0],img.shape[1]-DAsegmentation.shape[1]:,:]=DAsegmentation
+                img[:image_segmentation.shape[0],img.shape[1]-image_segmentation.shape[1]:,:]=image_segmentation
                 cv2.imshow('merge',img)
 
             toc = time.time()
@@ -161,7 +171,7 @@ def loop_and_detect(cam, trt_yolo, conf_th, vis):
             print(inst)
             pass
     Car.setAngle(0)
-    Car.setSpeed_cm(0)
+    Car.setSpeed_rad(0)
     del Car
 
 

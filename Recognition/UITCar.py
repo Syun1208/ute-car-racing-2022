@@ -74,6 +74,7 @@ class UITCar:
         self.__Oled_Init()
         self.__Servo_Init()
         self.__Motor_Init()
+        self.button = 0
 
     def __del__(self) :
         print("Del object")
@@ -144,6 +145,7 @@ class UITCar:
             -Biến:None
             -Trả về:None
         """
+        self.button = 1
         print("you are pressing button 1")
 
     def _Button2_Pressed(self, channel):
@@ -151,6 +153,7 @@ class UITCar:
             -Biến:None
             -Trả về:None
         """
+        self.button = 2
         print("you are pressing button 2")
 
     def _Button3_Pressed(self, channel):
@@ -158,6 +161,7 @@ class UITCar:
             -Biến:None
             -Trả về:None
         """
+        self.button = 3
         print("you are pressing button 3")
 
     def __OLED_Display(self):

@@ -103,12 +103,12 @@ class BBoxVisualization():
             # cl = int(cl)
             cll=cl
             ##-------------------------
-            color = self.colors[cl]
-            cv2.rectangle(img, (x_min, y_min), (x_max, y_max), color, 2)
-            txt_loc = (max(x_min+2, 0), max(y_min+2, 0))
-            cls_name = self.cls_dict.get(cl, 'CLS{}'.format(cl))
-            txt = '{} {:.2f}'.format(cls_name, cf)
-            img = draw_boxed_text(img, txt, txt_loc, color)
+            #color = self.colors[cl]
+            #cv2.rectangle(img, (x_min, y_min), (x_max, y_max), color, 2)
+            #txt_loc = (max(x_min+2, 0), max(y_min+2, 0))
+            #cls_name = self.cls_dict.get(cl, 'CLS{}'.format(cl))
+            #txt = '{} {:.2f}'.format(cls_name, cf)
+            #img = draw_boxed_text(img, txt, txt_loc, color)
             c=y_max-y_min
             d=x_max-x_min
             area=c*d
@@ -118,5 +118,5 @@ class BBoxVisualization():
             b = np.array([[x], [y]])
             centers.append(np.round(b))
 
-        return img,centers,cll,area
+        return centers,cll,area
         
