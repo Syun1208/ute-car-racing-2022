@@ -19,20 +19,6 @@ list_area = list()
 trafficSignsRegister = list()
 
 
-def road_lines(image, session, inputname):
-    # Crop ảnh lại, lấy phần ảnh có làn đường
-    image = image[200:, :, :]
-    small_img = cv2.resize(image, (160, 80))
-    small_img = np.array(small_img, dtype=np.float32)
-    small_img = small_img[None, :, :, :]
-    prediction = session.run(None, {inputname: small_img})
-    prediction = np.squeeze(prediction)
-    prediction = np.where(prediction < 0.5, 0, 255)
-    prediction = prediction.reshape(80, 160)
-    prediction = prediction.astype(np.uint8)
-    return cv2.cvtColor(prediction, cv2.COLOR_GRAY2RGB)
-
-
 class imageProcessing:
     def __init__(self, image, trafficSigns, Car):
         self.mask = image
@@ -119,6 +105,7 @@ class imageProcessing:
         mask = cv2.drawContours(image_binary, filteredContours, -1, (255, 255, 255), -1)
         image_remove = cv2.bitwise_and(self.mask, self.mask, mask=mask)
         return image_remove
+
     # def __removeSmallContours(self):
     #     image_binary = np.zeros((self.mask.shape[0], self.mask.shape[1]), np.uint8)
     #     contours = cv2.findContours(self.mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[0]
@@ -317,4 +304,3 @@ class imageProcessing:
         self.mask = cv2.dilate(self.mask, kernel, iterations=1)
         self.mask = self.__removeSmallContours()
         return self.mask, self.scale
-

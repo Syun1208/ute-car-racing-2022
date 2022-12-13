@@ -15,12 +15,13 @@ class Controller(imageProcessing):
             trafficSigns = [-1]
         self.trafficSigns = list(['camtrai', 'camphai', 'camthang', 'trai', 'phai', 'thang', 'none'])[
             int(trafficSigns[0])]
-        imageProcessing.__init__(self, image, self.trafficSigns, Car) 
+        imageProcessing.__init__(self, image, self.trafficSigns, Car)
         self.mask, self.scale = imageProcessing.__call__(self)
         # self.mask = image
         self.current_speed = Car.getSpeed_rad()
         self.Car = Car
         self.maxSpeed = maxSpeed
+
     def __reduceSpeed(self, speed):
         if self.current_speed > 20:
             return 0
@@ -41,7 +42,7 @@ class Controller(imageProcessing):
         center = int((minLane + maxLane) / 2)
         width = maxLane - minLane
         if width < 55:
-            if center < int(self.mask.shape[1]/2):
+            if center < int(self.mask.shape[1] / 2):
                 center -= 55 - width
             else:
                 center += 55 - width
@@ -68,8 +69,7 @@ class Controller(imageProcessing):
             angle = np.sign(angle) * 50
         return - int(angle) * scale
 
-    @staticmethod
-    def __conditionalSpeed(error):
+    def __conditionalSpeed(self, error):
         list_angle[1:] = list_angle[0:-1]
         list_angle[0] = abs(error)
         # list_angle_train = np.array(list_angle).reshape((-1, 1))
@@ -82,7 +82,7 @@ class Controller(imageProcessing):
     def __call__(self, *args, **kwargs):
         error = self.findingLane()
         print('Traffic Sign: ', self.trafficSigns)
-        self.Car.OLED_Print('Traffic Sign: {}'.format(self.trafficSigns),3)
+        self.Car.OLED_Print('Traffic Sign: {}'.format(self.trafficSigns), 3)
         if not self.trafficSigns or self.trafficSigns != 'none' or self.trafficSigns != 'thang':
             error = self.findingLane(scale=30)
         angle = self.__PID(error, self.scale)
@@ -90,4 +90,3 @@ class Controller(imageProcessing):
         speed = self.__reduceSpeed(speed)
         # angle = angle * 60 / 25
         return angle, speed
-
