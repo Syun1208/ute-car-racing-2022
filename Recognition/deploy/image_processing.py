@@ -20,15 +20,16 @@ trafficSignsRegister = list()
 
 
 class imageProcessing:
-    def __init__(self, image, trafficSigns, Car):
+    def __init__(self, image, trafficSigns, Car, area):
         self.mask = image
         self.left_mask = self.mask[:, :self.mask.shape[1] // 2][int(self.mask.shape[0] * 50 / 100):, :]
         self.right_mask = self.mask[:, self.mask.shape[1] // 2:][int(self.mask.shape[0] * 50 / 100):, :]
         self.height = self.mask.shape[0]
         self.width = self.mask.shape[1]
-        self.scale = 1
+        self.scale = 0
         self.trafficSigns = trafficSigns
         self.Car = Car
+        self.bbox_area = area
 
     def __ROIStraightNormally(self):
         polygonRight = np.array([
@@ -267,39 +268,38 @@ class imageProcessing:
     def __call__(self, *args, **kwargs):
         # _, __, __, horizontal_check_left = self.houghLines(self.left_mask)
         # _, __, __, horizontal_check_right = self.houghLines(self.right_mask)
-        # # area = self.__computeArea()
-        # trafficSignsRegister.insert(0, self.trafficSigns)
-        # # if area >= 67000:
-        # if self.trafficSigns == 'trai' or 'trai' in trafficSignsRegister:
-        #     # print('Turn left')
-        #     self.mask = self.__ROITurnLeft()
-        #     self.scale = 37
-        # elif self.trafficSigns == 'phai' or 'phai' in trafficSignsRegister:
-        #     # print('Turn right')
-        #     self.mask = self.__ROITurnRight()
-        #     self.scale = 37
-        # elif self.trafficSigns == 'camthang':
-        #     if horizontal_check_right:
-        #         self.mask = self.__ROITurnRight()
-        #         trafficSignsRegister.insert(0, 'phai')
-        #     elif horizontal_check_left:
-        #         self.mask = self.__ROITurnLeft()
-        #         trafficSignsRegister.insert(0, 'trai')
-        #     self.scale = 37
-        # elif self.trafficSigns == 'camphai' or 'camphai' in trafficSignsRegister:
-        #     self.mask = self.__ROINoTurnRight()
-        #     self.scale = 37
-        # elif self.trafficSigns == 'camtrai' or 'camtrai' in trafficSignsRegister:
-        #     self.mask = self.__ROINoTurnLeft()
-        #     self.scale = 37
-        # elif self.trafficSigns == 'thang':
-        #     self.mask = self.__ROIStraight()
-        #     self.scale = 26
-        # else:
-        #     self.mask = self.__ROIStraightNormally()
-        #     self.scale = 28
-        # if len(trafficSignsRegister) > 90:
-        #     trafficSignsRegister.pop(-1)
+        trafficSignsRegister.insert(0, self.trafficSigns)
+        if self.bbox_area >= 3700:
+            if self.trafficSigns == 'trai' or 'trai' in trafficSignsRegister:
+                # print('Turn left')
+                self.mask = self.__ROITurnLeft()
+                self.scale = 3
+            elif self.trafficSigns == 'phai' or 'phai' in trafficSignsRegister:
+                # print('Turn right')
+                self.mask = self.__ROITurnRight()
+                self.scale = 3
+            elif self.trafficSigns == 'camthang':
+                # if horizontal_check_right:
+                #     self.mask = self.__ROITurnRight()
+                #     trafficSignsRegister.insert(0, 'phai')
+                # elif horizontal_check_left:
+                #     self.mask = self.__ROITurnLeft()
+                #     trafficSignsRegister.insert(0, 'trai')
+                self.scale = 3
+            elif self.trafficSigns == 'camphai' or 'camphai' in trafficSignsRegister:
+                self.mask = self.__ROINoTurnRight()
+                self.scale = 3
+            elif self.trafficSigns == 'camtrai' or 'camtrai' in trafficSignsRegister:
+                self.mask = self.__ROINoTurnLeft()
+                self.scale = 3
+            elif self.trafficSigns == 'thang':
+                self.mask = self.__ROIStraight()
+                self.scale = 1
+            else:
+                self.mask = self.__ROIStraightNormally()
+                self.scale = 1
+        if len(trafficSignsRegister) > 90:
+            trafficSignsRegister.pop(-1)
         kernel = np.ones((15, 15), np.uint8)
         self.mask = cv2.dilate(self.mask, kernel, iterations=1)
         self.mask = self.__removeSmallContours()

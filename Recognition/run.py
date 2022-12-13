@@ -148,12 +148,12 @@ def loop_and_detect(cam, trt_yolo, conf_th, vis):
             img = show_fps(img, fps)
             maxSpeed = 20
             Car.setSpeed_rad(maxSpeed)
-            controller = Controller(image_segmentation, maxSpeed, class_TS, Car)
+            controller = Controller(image_segmentation, maxSpeed, class_TS, Car, area)
             angle, speed = controller()
             # Set into module
             set_angle_speed(Car, angle, speed)
-            Car.OLED_Print('Speed: {}'.format(str(speed)), 4)
-            Car.OLED_Print('Angle: {}'.format(str(angle)), 5)
+            Car.OLED_Print('Speed: {}'.format(str(speed)), 1)
+            Car.OLED_Print('Angle: {}'.format(str(angle)), 2)
             #####------Điều khiển-----------------------
             if SHOW_IMG:
                 img[:image_segmentation.shape[0], img.shape[1] - image_segmentation.shape[1]:, :] = image_segmentation
