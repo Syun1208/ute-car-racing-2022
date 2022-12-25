@@ -287,9 +287,10 @@ class Controller:
     def __init__(self, mask, current_speed):
         self.mask = mask
         self.current_speed = current_speed
+        self.__LANE_WIDTH = data_yaml['parameters']['width_lane']
 
     def __reduceSpeed(self, speed):
-        if self.current_speed > 100:
+        if self.current_speed > data_yaml['speed']['max']:
             return -2
         return speed
 
@@ -304,9 +305,20 @@ class Controller:
             arr_normal = [self.mask.shape[1] * 1 / 3, self.mask.shape[1] * 2 / 3]
         minLane = min(arr_normal)
         maxLane = max(arr_normal)
+        width = maxLane - minLane
         center = int((minLane + maxLane) / 2)
+        if data_yaml['controller']['turn_soon']:
+            center, width = self.turningSoon(center, width)
         error = int(self.mask.shape[1] / 2) - center
         return error
+
+    def turningSoon(self, center, width):
+        if 0 < width < self.__LANE_WIDTH:
+            if center < int(self.mask.shape[1] / 2):
+                center -= self.__LANE_WIDTH - width
+            else:
+                center += self.__LANE_WIDTH - width
+        return center, width
 
     @staticmethod
     def __PID(error, p=data_yaml['PID']['p'], i=data_yaml['PID']['i'], d=data_yaml['PID']['d']):
@@ -321,27 +333,25 @@ class Controller:
         I = np.sum(error_arr) * delta_t * i
         angle = P + I + D
         # angle = self.__optimizeFuzzy(angle)
-        if abs(angle) > 25:
-            angle = np.sign(angle) * 25
+        if abs(angle) > data_yaml['angle']['max']:
+            angle = np.sign(angle) * data_yaml['angle']['max']
         return - int(angle) * data_yaml['angle']['scale']
 
     @staticmethod
     def __conditionalSpeed(error):
-        list_angle[1:] = list_angle[0:-1]
-        list_angle[0] = abs(error)
-        list_angle_train = np.array(list_angle).reshape((-1, 1))
-        predSpeed = np.dot(list_angle, - 0.2) + data_yaml['speed']['max']
-        # reg = LinearRegression().fit(list_angle_train, speed)
-        reg = RandomForestRegressor(n_estimators=40, random_state=1).fit(list_angle_train, predSpeed)
-        predSpeed = reg.predict(np.array(list_angle_train))
-        return predSpeed[0]
+        # list_angle[1:] = list_angle[0:-1]
+        # list_angle[0] = abs(error)
+        # list_angle_train = np.array(list_angle).reshape((-1, 1))
+        # predSpeed = np.dot(list_angle, - 0.2) + data_yaml['speed']['max']
+        # # reg = LinearRegression().fit(list_angle_train, speed)
+        # reg = RandomForestRegressor(n_estimators=40, random_state=1).fit(list_angle_train, predSpeed)
+        # predSpeed = reg.predict(np.array(list_angle_train))
+        predSpeed = data_yaml['speed']['linear_slope'] * abs(error) + data_yaml['speed']['max']
+        return predSpeed
 
     def __call__(self, *args, **kwargs):
         error = self.__findingLane()
         angle = self.__PID(error)
-        print('Error: ', error)
-        print('Angle: ', angle)
         speed = self.__conditionalSpeed(error)
-        # speed = self.__reduceSpeed(speed)
-        print("Speed RF: ", speed)
+        speed = self.__reduceSpeed(speed)
         return angle, speed

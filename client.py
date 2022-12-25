@@ -23,8 +23,8 @@ port = 54321
 # connect to the server on local computer
 s.connect(('127.0.0.1', port))
 global angle, speed
-angle = 10
-speed = 100
+angle = 0
+speed = 200
 Signal_Traffic = 'straight'
 pre_Signal = 'straight'
 noneArray = np.zeros(50)
@@ -65,6 +65,16 @@ def parse_arg():
     return parser.parse_args()
 
 
+def show_fps(img, fps):
+    """Draw fps number at top-left corner of the image."""
+    font = cv2.FONT_HERSHEY_PLAIN
+    line = cv2.LINE_AA
+    fps_text = 'FPS: {:.2f}'.format(fps)
+    cv2.putText(img, fps_text, (11, 20), font, 1.0, (32, 32, 32), 4, line)
+    cv2.putText(img, fps_text, (10, 20), font, 1.0, (240, 240, 240), 1, line)
+    return img
+
+
 def load_weights():
     args = parse_arg()
     # logging.basicConfig(filename="std.log", format='%(asctime)s %(message)s', filemode='w')
@@ -84,6 +94,7 @@ def load_weights():
 
 def main():
     global angle, speed
+    data_recv = {}
     trainedSegmentation, trainedDetection, trainedRecognition = load_weights()
     try:
         while True:
@@ -94,22 +105,23 @@ def main():
             # Receive data from server
             data = s.recv(1000000000)
             # print(data)
-            data_recv = json.loads(data)
+            try:
+                data_recv = json.loads(data)
+            except Exception as error:
+                logging.error(error)
 
             # Angle and speed recv from server
             current_angle = data_recv["Angle"]
             current_speed = data_recv["Speed"]
-            print("angle: ", current_angle)
-            print("speed: ", current_speed)
-            print("---------------------------------------")
+            # print("angle: ", current_angle)
+            # print("speed: ", current_speed)
+            # print("---------------------------------------")
             # Img data recv from server
             '''-------------------------GET IMAGE FROM THE MAP-----------------------'''
             jpg_original = base64.b64decode(data_recv["Img"])
             jpg_as_np = np.frombuffer(jpg_original, dtype=np.uint8)
             image = cv2.imdecode(jpg_as_np, flags=1)
-            cv2.imshow("IMG", image)
-            key = cv2.waitKey(1)
-            print("Img Shape: ", image.shape)
+            print('-----------------------VÀ ĐÂY LÀ PHOLOTINO-------------------------')
             '''----------------------------IMAGE PROCESSING--------------------------'''
             # Save image
             # if not os.path.exists("/home/long/Desktop/UTECar-PHOLOTINO/datasets/"):
@@ -180,14 +192,16 @@ def main():
             # Enhance mask after segmentation
             enhancedMask = imageProcessing(mask)
             mask = enhancedMask()
-            cv2.imshow('Mask', mask)
-            key = cv2.waitKey(1)
             # Controller
             controller = Controller(mask, float(current_speed))
             angle, speed = controller()
             set_angle_speed(angle, speed)
             end = time.time()
-            fps = 1 / (end - start)
+            if data_yaml['parameters']['show_image']:
+                fps = 1 / (end - start)
+                image = show_fps(image, fps)
+                cv2.imshow("IMG", image)
+                key = cv2.waitKey(1)
     finally:
         print('closing socket')
         s.close()

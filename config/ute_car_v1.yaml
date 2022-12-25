@@ -1,10 +1,11 @@
 PID:
-  d: 0.05
+  d: 0.15
   i: 0
-  p: 0.43
-  scale_finding_lane: 30
+  p: 0.44
+  scale_finding_lane: 32
 angle:
   scale: 1
+  max: 25
 classes:
 - straight
 - turn_left
@@ -15,21 +16,26 @@ classes:
 - unknown
 controller:
   algorithm: random_forest
+  turn_soon: True
 detection:
   shape: !!python/tuple
   - 320
   - 320
-  weight_path: './weights/detection/best_m.pt'
+  weight_path: './weights/detection/best_yolov5m.pt'
 recognition:
   shape: !!python/tuple
   - 64
   - 64
-  weight_path: './weights/recognition/weight6_sum.pth'
+  weight_path: './weights/recognition/cnn.pth'
 segmentation:
   shape: !!python/tuple
   - 160
   - 80
   weight_path: './weights/segmentation/unet_v2.pth'
 speed:
-  max: 110
+  linear_slope: 0
+  max: 300
   min: 20
+parameters:
+  width_lane: 55.0
+  show_image: False
