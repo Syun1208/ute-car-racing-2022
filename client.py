@@ -201,6 +201,7 @@ def main():
                 fps = 1 / (end - start)
                 image = show_fps(image, fps)
                 cv2.imshow("IMG", image)
+                cv2.imshow("Mask", mask)
                 key = cv2.waitKey(1)
     finally:
         print('closing socket')

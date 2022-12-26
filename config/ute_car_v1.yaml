@@ -1,8 +1,8 @@
 PID:
   d: 0.15
   i: 0
-  p: 0.44
-  scale_finding_lane: 32
+  p: 0.43
+  scale_finding_lane: 31
 angle:
   scale: 1
   max: 25
@@ -31,7 +31,7 @@ segmentation:
   shape: !!python/tuple
   - 160
   - 80
-  weight_path: './weights/segmentation/unet_v2.pth'
+  weight_path: './weights/segmentation/unet_transfer.pth'
 speed:
   linear_slope: 0
   max: 300
