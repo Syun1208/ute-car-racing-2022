@@ -9,9 +9,12 @@ from deploy.controller import *
 import logging
 import yaml
 import torch
+from pygame import mixer
+from multiprocessing import Process
 from deploy.traffic_signs_detection import *
 from deploy.image_processing import *
 import argparse
+import requests
 
 torch.cuda.set_device(0)
 # Create a socket object
@@ -62,6 +65,8 @@ def parse_arg():
                         default=data_yaml['detection']['weight_path'])
     parser.add_argument('--weight-rec', type=str, help='initial weights path',
                         default=data_yaml['recognition']['weight_path'])
+    parser.add_argument('--url', type=str, help='url downloading music',
+                        default='https://stream.nixcdn.com/NhacCuaTui2029/DoanTuyetNangDiFrexsRemix-PhatHuyT4-7022889.mp3?st=SQkSrqlEECJcdathICmHdg&e=1666795517')
     return parser.parse_args()
 
 
@@ -75,6 +80,24 @@ def show_fps(img, fps):
     return img
 
 
+def playMusicPHOLOTINO(url, name_music):
+    try:
+        downloaded_file_location = ROOT / name_music
+        r = requests.get(url)
+        with open(downloaded_file_location, 'wb') as f:
+            f.write(r.content)
+        mixer.init()
+        mixer.music.load(ROOT / name_music)
+        mixer.music.set_volume(0.5)
+        mixer.music.play()
+    except Exception as bug:
+        logging.error(bug)
+        mixer.init()
+        mixer.music.load(ROOT / name_music)
+        mixer.music.set_volume(0.5)
+        mixer.music.play()
+
+
 def load_weights():
     args = parse_arg()
     # logging.basicConfig(filename="std.log", format='%(asctime)s %(message)s', filemode='w')
@@ -84,18 +107,18 @@ def load_weights():
     trainedModel = loadModels()
     trainedSegmentation = trainedModel.loadUNET(args.weight_seg)
     print('[INFO]: DONE IN LOADING SEGMENTATION')
-    trainedDetection = trainedModel.loadYOLO(args.weight_det)
-    print('[INFO]: DONE IN LOADING DETECTION')
-    trainedRecognition = trainedModel.loadCNN(args.weight_rec)
-    print('[INFO]: DONE IN LOADING RECOGNITION')
+    # trainedDetection = trainedModel.loadYOLO(args.weight_det)
+    # print('[INFO]: DONE IN LOADING DETECTION')
+    # trainedRecognition = trainedModel.loadCNN(args.weight_rec)
+    # print('[INFO]: DONE IN LOADING RECOGNITION')
     print('[INFO]: CHIẾN THÔI !')
-    return trainedSegmentation, trainedDetection, trainedRecognition
+    return trainedSegmentation
 
 
 def main():
     global angle, speed
     data_recv = {}
-    trainedSegmentation, trainedDetection, trainedRecognition = load_weights()
+    trainedSegmentation = load_weights()
     try:
         while True:
             # Gửi góc lái và tốc độ để điều khiển xe
@@ -109,6 +132,7 @@ def main():
                 data_recv = json.loads(data)
             except Exception as error:
                 logging.error(error)
+                continue
 
             # Angle and speed recv from server
             current_angle = data_recv["Angle"]
@@ -209,4 +233,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_arg()
+    p1 = Process(target=playMusicPHOLOTINO(args.url, 'pholotino.mp3'))
+    p1.start()
+    p2 = Process(target=main())
+    p2.start()
+    p1.join()
+    p2.join()
+    p1.terminate()
+    p2.terminate()

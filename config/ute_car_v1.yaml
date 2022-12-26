@@ -1,7 +1,7 @@
 PID:
-  d: 0.15
+  d: 0.17
   i: 0
-  p: 0.43
+  p: 0.44
   scale_finding_lane: 31
 angle:
   scale: 1
@@ -36,6 +36,7 @@ speed:
   linear_slope: 0
   max: 300
   min: 20
+  reduce: 140
 parameters:
   width_lane: 55.0
   show_image: False

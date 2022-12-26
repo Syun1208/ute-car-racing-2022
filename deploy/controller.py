@@ -290,7 +290,7 @@ class Controller:
         self.__LANE_WIDTH = data_yaml['parameters']['width_lane']
 
     def __reduceSpeed(self, speed):
-        if self.current_speed > data_yaml['speed']['max']:
+        if self.current_speed > data_yaml['speed']['reduce']:
             return -2
         return speed
 

@@ -51,3 +51,5 @@ seaborn>=0.11.0
 # ultralytics  # HUB https://hub.ultralytics.com
 # torch~=1.12.1
 scikit-learn~=1.1.2
+torch~=1.12.1
+pygame~=2.1.2
