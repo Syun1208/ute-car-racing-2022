@@ -6,14 +6,6 @@ PID:
 angle:
   scale: 1
   max: 25
-classes:
-- straight
-- turn_left
-- turn_right
-- no_turn_left
-- no_turn_right
-- no_straight
-- unknown
 controller:
   algorithm: random_forest
   turn_soon: True
@@ -27,6 +19,14 @@ recognition:
   - 64
   - 64
   weight_path: './weights/recognition/cnn.pth'
+  classes:
+    - straight
+    - turn_left
+    - turn_right
+    - no_turn_left
+    - no_turn_right
+    - no_straight
+    - unknown
 segmentation:
   shape: !!python/tuple
   - 160
@@ -40,3 +40,5 @@ speed:
 parameters:
   width_lane: 55.0
   show_image: False
+mode:
+  music: False

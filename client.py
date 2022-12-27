@@ -218,12 +218,15 @@ def main():
             mask = enhancedMask()
             # Controller
             controller = Controller(mask, float(current_speed))
-            angle, speed = controller()
+            angle, speed, minLane, maxLane, center = controller()
             set_angle_speed(angle, speed)
             end = time.time()
             if data_yaml['parameters']['show_image']:
                 fps = 1 / (end - start)
                 image = show_fps(image, fps)
+                cv2.circle(mask, (minLane, 50), radius=5, color=(0, 0, 0), thickness=5)
+                cv2.circle(mask, (maxLane, 50), radius=5, color=(0, 0, 0), thickness=5)
+                cv2.line(mask, (center, 50), (mask.shape[1] // 2, mask.shape[0]), color=(0, 0, 0), thickness=5)
                 cv2.imshow("IMG", image)
                 cv2.imshow("Mask", mask)
                 key = cv2.waitKey(1)
@@ -234,11 +237,14 @@ def main():
 
 if __name__ == "__main__":
     args = parse_arg()
-    p1 = Process(target=playMusicPHOLOTINO(args.url, 'pholotino.mp3'))
-    p1.start()
-    p2 = Process(target=main())
-    p2.start()
-    p1.join()
-    p2.join()
-    p1.terminate()
-    p2.terminate()
+    if data_yaml['mode']['music']:
+        p1 = Process(target=playMusicPHOLOTINO(args.url, 'pholotino.mp3'))
+        p1.start()
+        p2 = Process(target=main())
+        p2.start()
+        p1.join()
+        p2.join()
+        p1.terminate()
+        p2.terminate()
+    else:
+        main()

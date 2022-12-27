@@ -310,7 +310,7 @@ class Controller:
         if data_yaml['controller']['turn_soon']:
             center, width = self.turningSoon(center, width)
         error = int(self.mask.shape[1] / 2) - center
-        return error
+        return error, minLane, maxLane, center
 
     def turningSoon(self, center, width):
         if 0 < width < self.__LANE_WIDTH:
@@ -350,8 +350,8 @@ class Controller:
         return predSpeed
 
     def __call__(self, *args, **kwargs):
-        error = self.__findingLane()
+        error, minLane, maxLane, center = self.__findingLane()
         angle = self.__PID(error)
         speed = self.__conditionalSpeed(error)
         speed = self.__reduceSpeed(speed)
-        return angle, speed
+        return angle, speed, minLane, maxLane, center
