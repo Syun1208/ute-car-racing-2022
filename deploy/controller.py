@@ -277,6 +277,7 @@ sys.path.insert(0, WORK_DIR)
 #     return Signal_Traffic, center
 list_angle = np.zeros(5)
 error_arr = np.zeros(5)
+center_arr = np.zeros(5)
 t = time.time()
 
 file_yaml = open(os.path.join(WORK_DIR, 'config/ute_car_v1.yaml'), 'r')
@@ -290,9 +291,33 @@ class Controller:
         self.__LANE_WIDTH = data_yaml['parameters']['width_lane']
 
     def __reduceSpeed(self, speed):
-        if self.current_speed > data_yaml['speed']['reduce']:
-            return -2
+        if self.current_speed > data_yaml['speed']['max']:
+            return 0
         return speed
+
+    @staticmethod
+    def __timer(time_interval, mode):
+        start = time.time()
+        while time.time() - start < time_interval:
+            mode()
+
+    @staticmethod
+    def __T_Junction(center, minLane, maxLane):
+        width = maxLane - minLane
+        if 30 <= minLane <= 60 and maxLane >= 130:
+            center = maxLane - width // 2
+        elif 90 <= maxLane < 130 and minLane < 30:
+            center = minLane + width // 2
+        return center
+
+    @staticmethod
+    def __T_Junction_timer(center, minLane, maxLane):
+        global center_arr
+        center_arr[1:] = center_arr[0:-1]
+        center_arr[0] = center
+        if 30 <= minLane <= 60 and maxLane >= 130 or 90 <= maxLane < 130 and minLane < 30:
+            center = center_arr[1]
+        return center
 
     def __findingLane(self, scale=data_yaml['PID']['scale_finding_lane']):
         arr_normal = []
@@ -302,17 +327,18 @@ class Controller:
             if y == 255:
                 arr_normal.append(x)
         if not arr_normal:
-            arr_normal = [self.mask.shape[1] * 1 / 3, self.mask.shape[1] * 2 / 3]
+            arr_normal = [self.mask.shape[1] * 1 // 3, self.mask.shape[1] * 2 // 3]
         minLane = min(arr_normal)
         maxLane = max(arr_normal)
         width = maxLane - minLane
         center = int((minLane + maxLane) / 2)
+        # center = self.__T_Junction_timer(center, minLane, maxLane)
         if data_yaml['controller']['turn_soon']:
-            center, width = self.turningSoon(center, width)
+            center, width = self.__turningSoon(center, width)
         error = int(self.mask.shape[1] / 2) - center
         return error, minLane, maxLane, center
 
-    def turningSoon(self, center, width):
+    def __turningSoon(self, center, width):
         if 0 < width < self.__LANE_WIDTH:
             if center < int(self.mask.shape[1] / 2):
                 center -= self.__LANE_WIDTH - width

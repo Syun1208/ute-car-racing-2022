@@ -1,5 +1,5 @@
 PID:
-  d: 0.17
+  d: 0.15
   i: 0
   p: 0.44
   scale_finding_lane: 31
@@ -33,10 +33,9 @@ segmentation:
   - 80
   weight_path: './weights/segmentation/unet_transfer.pth'
 speed:
-  linear_slope: 0
+  linear_slope: -5
   max: 300
   min: 20
-  reduce: 140
 parameters:
   width_lane: 55.0
   show_image: False
