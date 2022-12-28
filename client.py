@@ -100,10 +100,6 @@ def playMusicPHOLOTINO(url, name_music):
 
 def load_weights():
     args = parse_arg()
-    # logging.basicConfig(filename="std.log", format='%(asctime)s %(message)s', filemode='w')
-    # logger = logging.getLogger()
-    # logger.setLevel(logging.DEBUG)
-    # logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
     trainedModel = loadModels()
     trainedSegmentation = trainedModel.loadUNET(args.weight_seg)
     print('[INFO]: DONE IN LOADING SEGMENTATION')
@@ -147,89 +143,34 @@ def main():
             image = cv2.imdecode(jpg_as_np, flags=1)
             print('-----------------------VÀ ĐÂY LÀ PHOLOTINO-------------------------')
             '''----------------------------IMAGE PROCESSING--------------------------'''
-            # Save image
-            # if not os.path.exists("/home/long/Desktop/UTECar-PHOLOTINO/datasets/"):
-            #     os.makedirs("/home/long/Desktop/UTECar-PHOLOTINO/datasets/")
-            # image_name = "/home/long/Desktop/UTECar-PHOLOTINO/datasets/ute_frame_{}.jpg".format(count)
-            # if count % 10 == 0:
-            #     cv2.imwrite(image_name, image)
-            # count += 1
-            # key = cv2.waitKey(1)
             start = time.time()
-            # if not flag_timer:
-            #     # Segmentation
-            #     modelSegmentation = segmentation(image)
-            #     mask = modelSegmentation(trainedSegmentation)
-            #     # Enhance mask after segmentation
-            #     enhancedMask = imageProcessing(mask)
-            #     mask = enhancedMask()
-            #     cv2.imshow('Mask', mask)
-            #     key = cv2.waitKey(1)
-            #     # Real-time processing
-            #     frame += 1
-            #     if frame % 1 == 0:
-            #         # Detection and Recognition
-            #         modelDetection = detection(image)
-            #         out_sign = modelDetection(trainedDetection, trainedRecognition)
-            #     if carFlag == 0:
-            #         if 50 <= frame < 100:
-            #             fpsArray[frame - 50] = fps
-            #         elif 100 <= frame < 120:
-            #             noneArray = np.zeros(int(np.mean(fpsArray) * reset_seconds))
-            #             carArray = noneArray[1:int(len(noneArray) / 2)]
-            #         elif frame > 150:
-            #             if out_sign == "none" or out_sign is None:
-            #                 noneArray[1:] = noneArray[0:-1]
-            #                 noneArray[0] = 0
-            #
-            #             else:
-            #                 noneArray[1:] = noneArray[0:-1]
-            #                 noneArray[0] = 1
-            #
-            #             if np.sum(noneArray) == 0:
-            #                 out_sign = "straight"
-            #     elif carFlag == 1:
-            #         if out_sign == "none" or out_sign is None or out_sign == "unknown":
-            #             carArray[1:] = carArray[0:-1]
-            #             carArray[0] = 0
-            #
-            #         else:
-            #             carArray[1:] = carArray[0:-1]
-            #             carArray[0] = 1
-            #
-            #         if np.sum(carArray) == 0:
-            #             out_sign = "straight"
-            # pre_Signal = Signal_Traffic
-            # if out_sign != "unknown" and out_sign is not None and out_sign != "none":
-            #     if out_sign == "car_left" or out_sign == "car_right":
-            #         carFlag = 1
-            #     else:
-            #         carFlag = 0
-            #     Signal_Traffic = out_sign
-            # '''---------------------------CONTROLLER---------------------------'''
-            # # Code anh Tuong
-            # Signal_Traffic, speed, error, flag_timer = Control_Car(mask, Signal_Traffic, current_speed)
-            # angle = -PID(error, data_yaml['PID']['p'], data_yaml['PID']['i'], data_yaml['PID']['d'])
-            # Segmentation
             modelSegmentation = segmentation(image)
             mask = modelSegmentation(trainedSegmentation)
             # Enhance mask after segmentation
-            enhancedMask = imageProcessing(mask)
-            mask = enhancedMask()
+            try:
+                enhancedMask = imageProcessing(mask)
+                mask = enhancedMask()
+            except Exception as error:
+                logging.error(error)
+                pass
             # Controller
             controller = Controller(mask, float(current_speed))
             angle, speed, minLane, maxLane, center = controller()
             set_angle_speed(angle, speed)
             end = time.time()
             if data_yaml['parameters']['show_image']:
-                fps = 1 / (end - start)
-                image = show_fps(image, fps)
-                cv2.circle(mask, (minLane, 50), radius=5, color=(0, 0, 0), thickness=5)
-                cv2.circle(mask, (maxLane, 50), radius=5, color=(0, 0, 0), thickness=5)
-                cv2.line(mask, (center, 50), (mask.shape[1] // 2, mask.shape[0]), color=(0, 0, 0), thickness=5)
-                cv2.imshow("IMG", image)
-                cv2.imshow("Mask", mask)
-                key = cv2.waitKey(1)
+                try:
+                    fps = 1 / (end - start)
+                    image = show_fps(image, fps)
+                    cv2.circle(mask, (minLane, 50), radius=5, color=(0, 0, 0), thickness=5)
+                    cv2.circle(mask, (maxLane, 50), radius=5, color=(0, 0, 0), thickness=5)
+                    cv2.line(mask, (center, 50), (mask.shape[1] // 2, mask.shape[0]), color=(0, 0, 0), thickness=5)
+                    cv2.imshow("IMG", image)
+                    cv2.imshow("Mask", mask)
+                    key = cv2.waitKey(1)
+                except Exception as bug:
+                    logging.error(bug)
+                    pass
     finally:
         print('closing socket')
         s.close()
@@ -238,13 +179,17 @@ def main():
 if __name__ == "__main__":
     args = parse_arg()
     if data_yaml['mode']['music']:
-        p1 = Process(target=playMusicPHOLOTINO(args.url, 'pholotino.mp3'))
-        p1.start()
-        p2 = Process(target=main())
-        p2.start()
-        p1.join()
-        p2.join()
-        p1.terminate()
-        p2.terminate()
+        try:
+            p1 = Process(target=playMusicPHOLOTINO(args.url, 'pholotino.mp3'))
+            p1.start()
+            p2 = Process(target=main())
+            p2.start()
+            p1.join()
+            p2.join()
+            p1.terminate()
+            p2.terminate()
+        except Exception as error:
+            logging.error(error)
+            main()
     else:
         main()
