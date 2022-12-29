@@ -278,6 +278,7 @@ sys.path.insert(0, WORK_DIR)
 list_angle = np.zeros(5)
 error_arr = np.zeros(5)
 center_arr = np.zeros(5)
+list_turn = list()
 t = time.time()
 
 file_yaml = open(os.path.join(WORK_DIR, 'config/ute_car_v1.yaml'), 'r')
@@ -290,9 +291,12 @@ class Controller:
         self.current_speed = current_speed
         self.__LANE_WIDTH = data_yaml['parameters']['width_lane']
 
-    def __reduceSpeed(self, speed):
+    def __reduceSpeed(self, speed, center):
+        # list_turn.insert(0, '')
         if self.current_speed > data_yaml['speed']['max']:
             return 0
+        if center >=145 or center <= 5:
+            return -10
         return speed
 
     @staticmethod
@@ -333,7 +337,7 @@ class Controller:
         width = maxLane - minLane
         center = int((minLane + maxLane) / 2)
         # center = self.__T_Junction_timer(center, minLane, maxLane)
-        if data_yaml['controller']['turn_soon']:
+        if data_yaml['controller']['turn_soon'] or center >=145 or center <= 5:
             center, width = self.__turningSoon(center, width)
         error = int(self.mask.shape[1] / 2) - center
         return error, minLane, maxLane, center
@@ -379,5 +383,5 @@ class Controller:
         error, minLane, maxLane, center = self.__findingLane()
         angle = self.__PID(error)
         speed = self.__conditionalSpeed(error)
-        speed = self.__reduceSpeed(speed)
+        speed = self.__reduceSpeed(speed, center)
         return angle, speed, minLane, maxLane, center

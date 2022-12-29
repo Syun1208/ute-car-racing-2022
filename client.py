@@ -156,7 +156,18 @@ def main():
             # Controller
             controller = Controller(mask, float(current_speed))
             angle, speed, minLane, maxLane, center = controller()
-            set_angle_speed(angle, speed)
+            if center >=155 or center <= 1:
+                start = time.time()
+                while time.time() - start < 1:
+                    if angle < 0:
+                        set_angle_speed(-25, speed)
+                    elif angle > 0:
+                        set_angle_speed(25, speed)
+            else:
+                set_angle_speed(angle, speed)
+            # if len(list_turn) > 5:
+            #     list_turn.pop(-1)
+            # set_angle_speed(angle, speed)
             end = time.time()
             if data_yaml['parameters']['show_image']:
                 try:
